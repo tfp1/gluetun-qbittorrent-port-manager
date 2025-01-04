@@ -2,10 +2,21 @@
 
 COOKIES="/tmp/cookies.txt"
 
+# Function to get the forwarded port
 get_port () {
-PORT_FORWARDED=$(curl -H "Authorization: $GLUETUN_APIKEY" -s http://$GLUETUN_SERVER:$GLUETUN_CONTROL_PORT/v1/openvpn/portforwarded | jq -r '.port')
+  if [ "$GLUETUN_AUTH_METHOD" == "apikey" ]; then
+    # Use Bearer token if GLUETUN_AUTH_METHOD is 'apikey'
+    PORT_FORWARDED=$(curl -H "Authorization: Bearer $GLUETUN_APIKEY" -s http://$GLUETUN_SERVER:$GLUETUN_CONTROL_PORT/v1/openvpn/portforwarded | jq -r '.port')
+  elif [ "$GLUETUN_AUTH_METHOD" == "basic" ]; then
+    # Use Basic Auth if GLUETUN_AUTH_METHOD is 'basic'
+    PORT_FORWARDED=$(curl -u $GLUETUN_USERNAME:$GLUETUN_PASSWORD -s http://$GLUETUN_SERVER:$GLUETUN_CONTROL_PORT/v1/openvpn/portforwarded | jq -r '.port')
+  else
+    echo "Unsupported authentication method: $GLUETUN_AUTH_METHOD"
+    exit 1
+  fi
 }
 
+# Function to update the port in qBittorrent
 update_port () {
   PORT=$PORT_FORWARDED
   rm -f $COOKIES
@@ -15,15 +26,17 @@ update_port () {
   echo "Successfully updated qbittorrent to port $PORT"
 }
 
+# Initial port check
+get_port
+LAST_PORT=$PORT_FORWARDED
+
+# Loop to check every 60 seconds and update if the port has changed
 while true; do
-  if [ -f $PORT_FORWARDED ]; then
-    update_port
-    inotifywait -mq -e close_write $PORT_FORWARDED | while read change; do
-      update_port
-    done
-  else
-    echo "Couldn't find file $PORT_FORWARDED"
-    echo "Trying again in 10 seconds"
-    sleep 10
+  get_port  # Get the latest port
+  if [ "$PORT_FORWARDED" != "$LAST_PORT" ]; then
+    echo "Port has changed from $LAST_PORT to $PORT_FORWARDED"
+    update_port  # Update if the port has changed
+    LAST_PORT=$PORT_FORWARDED  # Store the new port as the last known port
   fi
+  sleep 60  # Wait for 60 seconds before checking again
 done
