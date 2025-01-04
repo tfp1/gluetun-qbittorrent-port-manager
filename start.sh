@@ -3,7 +3,7 @@
 COOKIES="/tmp/cookies.txt"
 
 get_port () {
-PORT_FORWARDED=$(curl -H "Authorization: $GLUETUN_APIKEY" -s http://$GLUETUN_SERVER:$GLUETUN_PORT/v1/openvpn/portforwarded | jq -r '.port')
+PORT_FORWARDED=$(curl -H "Authorization: $GLUETUN_APIKEY" -s http://$GLUETUN_SERVER:$GLUETUN_CONTROL_PORT/v1/openvpn/portforwarded | jq -r '.port')
 }
 
 update_port () {
