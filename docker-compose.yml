@@ -1,13 +1,16 @@
 gluetun-qbittorrent-port-manager:
-  image: snoringdragon/gluetun-qbittorrent-port-manager:latest
+  image: tfp1/gluetun-qbittorrent-port-manager:latest
   restart: unless-stopped
-  volumes:
-    - /yourfolder:/tmp/gluetun #Set "yourfolder" to the same directory you used for Gluetun
   network_mode: "service: gluetun"
   environment:
+    GLUETUN_SERVER: localhost
+    GLUETUN_CONTROL_PORT: 8000
+    GLUETUN_AUTH_METHOD: apikey #apikey or basic
+    GLUETUN_APIKEY: $APIKEY # Generate an API key with docker run --rm qmcgaw/gluetun genkey see https://github.com/qdm12/gluetun-wiki/blob/7d5bec0c2c11a33e71715f5f09fa417c002d109c/setup/advanced/control-server.md#authentication-methods
+    #GLUETUN_USERNAME=
+    #GLUETUN_PASSWORD=
     QBITTORRENT_SERVER: localhost # IP Address of qbittorrent
     QBITTORRENT_PORT: 8080
     QBITTORRENT_USER: admin # username
     QBITTORRENT_PASS: adminadmin # password
-    PORT_FORWARDED: /tmp/gluetun/forwarded_port
     HTTP_S: http # Select 'http' or 'https' depending on if you use certificates.
