@@ -2,8 +2,12 @@
 
 COOKIES="/tmp/cookies.txt"
 
+get_port () {
+PORT_FORWARDED=$(curl -H "Authorization: $GLUETUN_APIKEY" -s http://$GLUETUN_SERVER:$GLUETUN_PORT/v1/openvpn/portforwarded | jq -r '.port')
+}
+
 update_port () {
-  PORT=$(cat $PORT_FORWARDED)
+  PORT=$PORT_FORWARDED
   rm -f $COOKIES
   curl -s -c $COOKIES --data "username=$QBITTORRENT_USER&password=$QBITTORRENT_PASS" ${HTTP_S}://${QBITTORRENT_SERVER}:${QBITTORRENT_PORT}/api/v2/auth/login > /dev/null
   curl -s -b $COOKIES --data 'json={"listen_port": "'"$PORT"'"}' ${HTTP_S}://${QBITTORRENT_SERVER}:${QBITTORRENT_PORT}/api/v2/app/setPreferences > /dev/null
